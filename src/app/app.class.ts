@@ -35,18 +35,16 @@ export class App {
     clean() {
         this._shapes = [];
         this._pointCount = 0;
-        this._setHints('step1');
         this._appButtonClean.style.display = 'none';
         this._appParams.innerHTML = '';
+        this._setHints('step1');
     }
 
     run(parent?: HTMLElement) {
         (parent || document.body).appendChild(this._appRootElement);
-        setTimeout(() => {
-            this._setListeners();
-            this._updateCanvasSize();
-            this._tick();
-        }, 0);
+        this._setListeners();
+        this._updateCanvasSize();
+        this._tick();
     }
 
     private _draw() {
@@ -126,10 +124,12 @@ export class App {
     }
 
     private _updateCanvasSize() {
-        const { width, height, top, left } = this._appCanvasContainer.getBoundingClientRect();
-        this._delta = { x: left, y: top };
-        this._canvas.width = width;
-        this._canvas.height = height;
+        setTimeout(() => {
+            const { width, height, top, left } = this._appCanvasContainer.getBoundingClientRect();
+            this._delta = { x: left, y: top };
+            this._canvas.width = width;
+            this._canvas.height = height;
+        });
     }
 
     private _setListeners() {
@@ -139,10 +139,33 @@ export class App {
         window.addEventListener('mousemove', (event: MouseEvent) => this._onMouseMove(event));
         this._appButtonClean.addEventListener('click', (event: MouseEvent) => this.clean());
         window.addEventListener('resize', (event: Event) => this._onWindowResize(event));
+
+        const dispatchWindowEvent = (touches: TouchList, type: string) => {
+            if (type === 'mouseup') {
+                window.dispatchEvent(new MouseEvent(type));
+                return;
+            }
+            Array.prototype.forEach.call(touches, (touch: Touch) => {
+                const mouseEvent = new MouseEvent(type, {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                window.dispatchEvent(mouseEvent);
+            });
+        };
+        window.addEventListener(
+            'touchstart', (event: TouchEvent) => dispatchWindowEvent(event.touches, 'mousedown'));
+        window.addEventListener(
+            'touchend', (event: TouchEvent) => dispatchWindowEvent(event.touches, 'mouseup'));
+        window.addEventListener(
+            'touchcancel', (event: TouchEvent) => dispatchWindowEvent(event.touches, 'mouseup'));
+        window.addEventListener(
+            'touchmove', (event: TouchEvent) => dispatchWindowEvent(event.touches, 'mousemove'));
     }
 
     private _setHints(stepName: string) {
         this._appHints.innerHTML = App.hints[ stepName ];
+        this._updateCanvasSize();
     }
 
     private _setParams() {
