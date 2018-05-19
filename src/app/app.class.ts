@@ -69,7 +69,7 @@ export class App {
             if (!(shape instanceof Point)) {
                 return false;
             }
-            return (shape as Point).checkPoint({ x, y });
+            return (shape as Point).includes({ x, y });
         });
 
         if (exists) {
@@ -96,7 +96,7 @@ export class App {
             if (!(shape instanceof Point)) {
                 return false;
             }
-            return (shape as Point).checkPoint({ x, y });
+            return (shape as Point).includes({ x, y });
         });
         this._pointToMove = point as Point;
     }

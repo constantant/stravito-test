@@ -13,7 +13,7 @@ export class Point implements IShape, IPoint {
         this._screen.stroke();
     }
 
-    checkPoint(point: IPoint): boolean {
+    includes(point: IPoint): boolean {
         return Math.abs(point.x - this.x) + Math.abs(point.y - this.y) <= Math.abs(this._radius);
     }
 }
