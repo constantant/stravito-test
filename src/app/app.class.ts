@@ -157,7 +157,7 @@ export class App {
             }
         });
         const [ p1, p2, p3 ] = points;
-        const str = `p1: ${p1}; p1: ${p2}; p1: ${p3}; S: ${area}`;
+        const str = `p1: ${p1}; p2: ${p2}; p3: ${p3}; S: ${area}`;
         if (p1 && p2 && p3 && area && str !== this._appParams.innerHTML) {
             this._appParams.innerHTML = str;
         }
