@@ -1,0 +1,31 @@
+{
+  "name": "stravito-test",
+  "version": "1.0.0",
+  "description": "JavaScript assignment",
+  "scripts": {
+    "serve": "npm run start & npm run watch",
+    "watch": "webpack --watch",
+    "start": "webpack-dev-server --config webpack.config.dev.js",
+    "build": "webpack --config webpack.config.prod.js"
+  },
+  "keywords": [
+    "html",
+    "javascript"
+  ],
+  "author": "kharitonov.k.y@gmail.com",
+  "license": "ISC",
+  "devDependencies": {
+    "clean-webpack-plugin": "^0.1.19",
+    "css-loader": "^0.28.11",
+    "html-webpack-plugin": "^3.2.0",
+    "node-sass": "^4.9.0",
+    "sass-loader": "^7.0.1",
+    "style-loader": "^0.21.0",
+    "ts-loader": "^4.3.0",
+    "typescript": "^2.8.3",
+    "webpack": "^4.8.3",
+    "webpack-cli": "^2.1.3",
+    "webpack-dev-server": "^3.1.4",
+    "webpack-merge": "^4.1.2"
+  }
+}

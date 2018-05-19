@@ -1,0 +1,44 @@
+.app {
+  &-root {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+  }
+  &-header,
+  &-footer {
+    display: flex;
+    flex-shrink: 0;
+    padding: 10px;
+  }
+  &-main {
+    position: relative;
+    flex-grow: 1;
+  }
+  &-canvas {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    canvas {
+      display: block;
+    }
+  }
+  &-button {
+    &-clean {
+      flex-shrink: 0;
+    }
+  }
+  &-hints {
+    flex-grow: 1;
+  }
+  &-params {
+    flex-grow: 1;
+  }
+}
