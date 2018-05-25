@@ -10,16 +10,6 @@
     font-family: Arial, sans-serif;
     overflow: hidden;
   }
-  &-header,
-  &-footer {
-    display: flex;
-    flex-shrink: 0;
-    padding: 10px;
-  }
-  &-main {
-    position: relative;
-    flex-grow: 1;
-  }
   &-canvas {
     position: absolute;
     top: 0;
@@ -32,13 +22,9 @@
   }
   &-button {
     &-clean {
-      flex-shrink: 0;
+      position: absolute;
+      top: 0;
+      right: 0;
     }
-  }
-  &-hints {
-    flex-grow: 1;
-  }
-  &-params {
-    flex-grow: 1;
   }
 }

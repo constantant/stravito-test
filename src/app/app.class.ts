@@ -1,6 +1,8 @@
 import { Circle } from './circle';
 import { Parallelogram } from './parallelogram';
 import { Point } from './point';
+import { AppView } from './app-view';
+import { AppInfo } from './app-info';
 
 enum EMouseState {
     Down,
@@ -8,49 +10,45 @@ enum EMouseState {
 }
 
 export class App {
-    private _canvas: HTMLCanvasElement;
-    private _screen: CanvasRenderingContext2D;
-    private _appRootElement: HTMLDivElement;
-    private _appCanvasContainer: HTMLElement;
-    private _appHeader: HTMLElement;
-    private _appButtonClean: HTMLButtonElement;
-    private _appHints: HTMLDivElement;
-    private _appParams: HTMLDivElement;
-    private _appFooter: HTMLElement;
-    private _shapes: IShape[] = [];
-    private _delta: IPoint;
+    private _shapes: IShape[];
     private _pointCount = 0;
     private _mouseState: EMouseState = EMouseState.Up;
     private _pointToMove: Point;
+    private _appView: AppView;
+    private _appInfo: AppInfo;
 
-    static hints: { [ key: string ]: string } = {
-        'step1': 'Put three points on the free area',
-        'step2': 'You can move the red circles that allows to change the sizes of the parallelogram and the circle'
+    static hints: { [ key: string ]: string[] } = {
+        'step1': [
+            'Put three points on the free area'
+        ],
+        'step2': [
+            'Move the red circles',
+            'that allows to change the sizes of',
+            'the blue parallelogram and the yellow circle'
+        ]
     };
 
-    constructor() {
+    constructor(private _author: IAuthor) {
         this._makeAppearance();
     }
 
     clean() {
-        this._shapes = [];
-        this._pointCount = 0;
-        this._appButtonClean.style.display = 'none';
-        this._appParams.innerHTML = '';
+        this._appView.hideButton();
+        this._appInfo = new AppInfo(this._appView.screen, this._author);
         this._setHints('step1');
+        this._shapes = [ this._appInfo ];
+        this._pointCount = 0;
     }
 
     run(parent?: HTMLElement) {
-        (parent || document.body).appendChild(this._appRootElement);
+        this._appView.render(parent);
         this._setListeners();
-        this._updateCanvasSize();
         this._tick();
     }
 
     private _draw() {
-        this._screen.clearRect(0, 0, this._canvas.width, this._canvas.height);
+        this._appView.clearRect();
         this._shapes.forEach((shape: IShape) => shape.draw());
-        this._setParams();
     }
 
     private _tick() {
@@ -58,151 +56,87 @@ export class App {
         requestAnimationFrame(() => this._tick());
     }
 
-    private _onClick(event: MouseEvent) {
+    private _onClick(point: IPoint) {
         if (this._pointCount === 3) {
             return;
         }
-        const { clientX, clientY } = event;
-        const x = clientX - this._delta.x;
-        const y = clientY - this._delta.y;
+        const { x, y } = point;
+        const { screen } = this._appView;
         const exists = this._shapes.some((shape: IShape) => {
             if (!(shape instanceof Point)) {
                 return false;
             }
-            return (shape as Point).includes({ x, y });
+            return (shape as Point).includes(point);
         });
 
         if (exists) {
             return;
         }
 
-        this._shapes.push(new Point(this._screen, x, y));
+        const _point = new Point(screen, x, y);
+        this._shapes.push(_point);
+        this._appInfo.addPoint(_point);
+
         if (++this._pointCount === 3) {
             const [ point1, point2, point3 ] = (this._shapes.filter((shape: IShape) => shape instanceof Point) as Point[]);
-            this._shapes.push(new Parallelogram(this._screen, point1, point2, point3));
-            this._shapes.push(new Circle(this._screen, point1, point2, point3));
+            this._shapes.push(new Parallelogram(screen, point1, point2, point3));
+
+            const circle = new Circle(screen, point1, point2, point3);
+            this._shapes.push(circle);
+            this._appInfo.setCircle(circle);
             this._setHints('step2');
-            this._appButtonClean.style.display = '';
-            this._setParams();
+        }
+
+        if (this._pointCount > 0) {
+            this._appView.showButton();
         }
     }
 
-    private _onMouseDown(event: MouseEvent) {
+    private _onMouseDown(point: IPoint) {
         this._mouseState = EMouseState.Down;
-        const { clientY, clientX } = event;
-        const x = clientX - this._delta.x;
-        const y = clientY - this._delta.y;
-        const [ point ] = this._shapes.filter((shape: IShape) => {
+        const [ _pointToMove ] = this._shapes.filter((shape: IShape) => {
             if (!(shape instanceof Point)) {
                 return false;
             }
-            return (shape as Point).includes({ x, y });
+            return (shape as Point).includes(point);
         });
-        this._pointToMove = point as Point;
+        this._pointToMove = _pointToMove as Point;
     }
 
-    private _onMouseUp(event: MouseEvent) {
+    private _onMouseUp() {
         this._mouseState = EMouseState.Up;
     }
 
-    private _onMouseMove(event: MouseEvent) {
+    private _onMouseMove(point: IPoint) {
         if (this._mouseState === EMouseState.Up) {
             return;
         }
         if (!this._pointToMove) {
             return;
         }
-        const { clientY, clientX } = event;
-        const x = clientX - this._delta.x;
-        const y = clientY - this._delta.y;
+        const { x, y } = point;
         this._pointToMove.x = x;
         this._pointToMove.y = y;
     }
 
-    private _onWindowResize(event: Event) {
-        this._updateCanvasSize();
-    }
-
-    private _updateCanvasSize() {
-        setTimeout(() => {
-            const { width, height, top, left } = this._appCanvasContainer.getBoundingClientRect();
-            this._delta = { x: left, y: top };
-            this._canvas.width = width;
-            this._canvas.height = height;
-        });
-    }
-
     private _setListeners() {
-        this._canvas.addEventListener('click', (event: MouseEvent) => this._onClick(event));
-        window.addEventListener('mousedown', (event: MouseEvent) => this._onMouseDown(event));
-        window.addEventListener('mouseup', (event: MouseEvent) => this._onMouseUp(event));
-        window.addEventListener('mousemove', (event: MouseEvent) => this._onMouseMove(event));
-        this._appButtonClean.addEventListener('click', (event: MouseEvent) => this.clean());
-        window.addEventListener('resize', (event: Event) => this._onWindowResize(event));
-
-        const dispatchWindowEvent = (touches: TouchList, type: string) => {
-            if (type === 'mouseup') {
-                window.dispatchEvent(new MouseEvent(type));
-                return;
-            }
-            Array.prototype.forEach.call(touches, (touch: Touch) => {
-                const mouseEvent = new MouseEvent(type, {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                });
-                window.dispatchEvent(mouseEvent);
-            });
-        };
-        window.addEventListener(
-            'touchstart', (event: TouchEvent) => dispatchWindowEvent(event.touches, 'mousedown'));
-        window.addEventListener(
-            'touchend', (event: TouchEvent) => dispatchWindowEvent(event.touches, 'mouseup'));
-        window.addEventListener(
-            'touchcancel', (event: TouchEvent) => dispatchWindowEvent(event.touches, 'mouseup'));
-        window.addEventListener(
-            'touchmove', (event: TouchEvent) => dispatchWindowEvent(event.touches, 'mousemove'));
+        this._appView.setCleanListener(() => this.clean());
+        this._appView.setMouseListener('click', (point: IPoint) => this._onClick(point));
+        this._appView.setMouseListener('mousedown', (point: IPoint) => this._onMouseDown(point));
+        this._appView.setMouseListener('mouseup', () => this._onMouseUp());
+        this._appView.setMouseListener('mousemove', (point: IPoint) => this._onMouseMove(point));
     }
 
     private _setHints(stepName: string) {
-        this._appHints.innerHTML = App.hints[ stepName ];
-        this._updateCanvasSize();
-    }
-
-    private _setParams() {
-        const points = [];
-        let area: number;
-        this._shapes.forEach((shape: IShape) => {
-            if (shape instanceof Point) {
-                points.push([ shape.x, shape.y ]);
-            }
-            if (shape instanceof Circle) {
-                area = shape.area;
-            }
-        });
-        const [ p1, p2, p3 ] = points;
-        const str = `p1: ${p1}; p2: ${p2}; p3: ${p3}; S: ${area}`;
-        if (p1 && p2 && p3 && area && str !== this._appParams.innerHTML) {
-            this._appParams.innerHTML = str;
-        }
+        this._appInfo.setHint(App.hints[ stepName ]);
     }
 
     private _makeAppearance() {
-        this._appRootElement = document.createElement('div');
-        this._appRootElement.className = 'app-root';
-        this._appRootElement.innerHTML = `<header class="app-header"><div class="app-hints"></div><button class="app-button-clean">Clean</button></header><main class="app-main"><div class="app-canvas"></div></main><footer class="app-footer"><div class="app-params"></div><div>&copy; Konstantin Kharitonov</div></footer>`;
-
-        this._appCanvasContainer = this._appRootElement.querySelector('.app-canvas');
-        this._appHeader = this._appRootElement.querySelector('.app-canvas');
-        this._appButtonClean = this._appRootElement.querySelector('.app-button-clean');
-        this._appHints = this._appRootElement.querySelector('.app-hints');
-        this._appParams = this._appRootElement.querySelector('.app-params');
-        this._appFooter = this._appRootElement.querySelector('.app-canvas');
-        this._canvas = document.createElement('canvas');
-        this._screen = this._canvas.getContext('2d');
-
-        this._appCanvasContainer.appendChild(this._canvas);
-
+        this._appView = new AppView();
+        this._appInfo = new AppInfo(this._appView.screen, this._author);
         this._setHints('step1');
-        this._appButtonClean.style.display = 'none';
+        this._shapes = [ this._appInfo ];
+        this._appView.hideButton();
+        this._appView.render();
     }
 }

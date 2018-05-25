@@ -1,6 +1,6 @@
 {
   "name": "stravito-test",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JavaScript assignment",
   "scripts": {
     "serve": "npm run start & npm run watch",
