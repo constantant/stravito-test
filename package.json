@@ -3,6 +3,7 @@
   "version": "1.0.1",
   "description": "JavaScript assignment",
   "scripts": {
+    "aws": "aws s3 sync ./dist s3://constantant.ru/stravito-test --acl public-read",
     "serve": "npm run start & npm run watch",
     "watch": "webpack --watch",
     "start": "webpack-dev-server --config webpack.config.dev.js",
